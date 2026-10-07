@@ -1,0 +1,12 @@
+<mvc:View controllerName="ns.helloworld.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}">
+        <content>
+            <VBox class="sapUiMediumMargin">
+                <Title text="Hello World!" level="H1" titleStyle="H1" class="sapUiSmallMarginBottom" />
+                <Text text="Welcome to my first SAP BTP freestyle application!" />
+            </VBox>
+        </content>
+    </Page>
+</mvc:View>

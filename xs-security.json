@@ -1,6 +1,29 @@
 {
+  "xsappname": "nshelloworld-a2c96951trial-dev",
+  "tenant-mode": "dedicated",
   "description": "Security profile of called application",
-  "scopes": [],
-  "attributes": [],
-  "role-templates": []
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Display",
+      "description": "display"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Viewer",
+      "description": "Required to read records",
+      "scope-references": [
+        "$XSAPPNAME.Display"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "HelloWorldDisplayRole",
+      "description": "View HelloWorld records",
+      "role-template-references": [
+        "$XSAPPNAME.Viewer"
+      ]
+    }
+  ]
 }

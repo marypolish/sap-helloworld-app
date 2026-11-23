@@ -1,0 +1,178 @@
+_schema-version: "3.2"
+ID: nshelloworldsaas
+description: Hello World converted to multitenant SaaS
+version: 0.0.1
+modules:
+# App router ###########################################################
+- name: nshelloworldsaas-approuter
+  type: approuter.nodejs
+  path: nshelloworld-approuter
+  requires:
+  - name: nshelloworldsaas-html5-repo-runtime
+  - name: nshelloworldsaas-uaa
+  - name: nshelloworldsaas-destination-service
+    group: destinations
+    properties:
+      forwardAuthToken: true
+      name: ui5
+      url: https://ui5.sap.com
+  - name: saas-registry
+  parameters:
+    routes:
+      - route: https://${subdomain}-${appname}.${default-domain}
+      - route: https://${customer_subdomain}-${appname}.${default-domain}
+    disk-quota: 256M
+    memory: 256M
+  properties:
+    TENANT_HOST_PATTERN: "^(.*)-${appname}.${default-domain}"
+    CJ_PROTECT_WHITELIST: '[{"protocol": "https","host":"*.ondemand.com"}]'
+    httpHeaders: '[{"Content-Security-Policy":"frame-ancestors https://*.ondemand.com;"},{"X-Frame-Options":"SAMEORIGIN"},{"Cache-control":"no-cache, no-store, must-revalidate"}]'
+
+# Destination deployer module - create CDM DT destination ##########
+- name: nshelloworldsaas-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: nshelloworldsaas-destination-service
+    parameters:
+      content-target: true
+  - name: nshelloworldsaas-html5-repo-runtime
+    parameters:
+      service-key:
+        name: nshelloworldsaas-app-rt-key
+  - name: nshelloworldsaas-uaa
+    parameters:
+      service-key:
+        name: nshelloworldsaas-uaa-key
+  parameters:
+    content:
+      subaccount:
+        destinations:
+        - Name: provider_cdm
+          ServiceInstanceName: nshelloworldsaas-app-rt-service
+          ServiceKeyName: nshelloworldsaas-app-rt-key
+          URL: https://html5-apps-repo-rt.cfapps.us10.hana.ondemand.com/applications/cdm/kpi_helloworld
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+
+# HTML5 app deployer module ##########################################
+- name: nshelloworldsaas-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: nshelloworldsaas-uaa
+  - name: nshelloworldsaas-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - nshelloworldsaas.zip
+      name: nshelloworldsaas
+      target-path: resources/
+  parameters:
+    config:
+      destinations:
+      - name: ui5
+        url: https://ui5.sap.com
+
+# HTML5 Module #########################################################
+- name: nshelloworldsaas
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+
+resources:
+- name: nshelloworldsaas-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: shared
+      xsappname: ${appname}
+      oauth2-configuration:
+        redirect-uris:
+          - https://*.cfapps.us10-001.hana.ondemand.com/**
+      scopes:
+        - name: $XSAPPNAME.Callback
+          description: With this scope set, the callbacks for tenant onboarding, offboarding and getDependencies can be called.
+          grant-as-authority-to-apps:
+            - $XSAPPNAME(application,sap-provisioning,tenant-onboarding)
+      foreign-scope-references:
+        - uaa.user
+    service: xsuaa
+    service-name: nshelloworldsaas-xsuaa-service
+    service-plan: application
+
+- name: nshelloworldsaas-html5-repo-runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: nshelloworldsaas-app-rt-service
+    service-plan: app-runtime
+
+- name: nshelloworldsaas-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: nshelloworldsaas-html5-service
+    service-plan: app-host
+
+- name: nshelloworldsaas-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        subaccount:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: provider-rt
+            ProxyType: Internet
+            Type: HTTP
+            CEP.HTML5contentprovider: true
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            URL: https://${customer_subdomain}.launchpad.cfapps.us10.hana.ondemand.com/
+          existing_destinations_policy: ignore
+      version: 1.0.0
+    service: destination
+    service-name: nshelloworldsaas-destination-service
+    service-plan: lite
+
+- name: saas-registry
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: saas-registry
+    service-plan: application
+    service-name: ${appname}-saas-registry
+    config:
+      xsappname: ${appname}
+      appName: ${appname}
+      displayName: Hello World
+      description: SaaS Hello World
+      category: Custom KPI Apps
+      appUrls:
+        onSubscription: https://${subdomain}-${appname}.${default-domain}/callback/v1.0/tenants/{tenantId}
+        getDependencies: https://${subdomain}-${appname}.${default-domain}/callback/v1.0/dependencies
+
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+  appname: nshelloworldsaas
+  subdomain: a2c96951trial
+  customer_subdomain: consumer1-a2c96951
+
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
+    - mkdir -p resources
+    - cp workzone/cdm.json resources/cdm.json

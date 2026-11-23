@@ -1,0 +1,76 @@
+[
+  {
+    "_version": "3.0",
+    "identification": {
+      "id": "wz_helloworld_catalog",
+      "title": "Provider: Hello World SaaS",
+      "entityType": "catalog"
+    },
+    "payload": {
+      "viz": [
+        {
+          "appId": "ns.helloworldsaas",
+          "vizId": "helloworld-display"
+        }
+      ]
+    },
+    "texts": [
+      {
+        "locale": "",
+        "textDictionary": {
+          "title": "Provider: Hello World SaaS"
+        }
+      }
+    ]
+  },
+  {
+    "_version": "3.0",
+    "identification": {
+      "id": "wz_helloworld_group",
+      "title": "Provider: Hello World SaaS",
+      "entityType": "group"
+    },
+    "payload": {
+      "viz": [
+        {
+          "appId": "ns.helloworldsaas",
+          "vizId": "helloworld-display"
+        }
+      ]
+    },
+    "texts": [
+      {
+        "locale": "",
+        "textDictionary": {
+          "title": "Provider: Hello World SaaS"
+        }
+      }
+    ]
+  },
+  {
+    "_version": "3.0",
+    "identification": {
+      "id": "wz_helloworld_role",
+      "title": "Hello World SaaS user",
+      "description": "Hello World SaaS tiles",
+      "entityType": "role"
+    },
+    "payload": {
+      "apps": [
+        {
+          "id": "ns.helloworldsaas"
+        }
+      ],
+      "catalogs": [
+        {
+          "id": "wz_helloworld_catalog"
+        }
+      ],
+      "groups": [
+        {
+          "id": "wz_helloworld_group"
+        }
+      ]
+    }
+  }
+]
